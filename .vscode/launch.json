@@ -1,0 +1,21 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "TestingChatApplication",
+      "request": "launch",
+      "mainClass": "live.chat.live_chat.TestingChatApplication",
+      "projectName": "chat"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-LiveChatApplication<chat>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "live.chat.live_chat.LiveChatApplication",
+      "projectName": "chat",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

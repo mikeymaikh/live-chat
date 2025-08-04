@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +28,11 @@ public class MessageController {
         }
         messages.add(message);
         return message;
+    }
+
+    @PostMapping("/messages")
+    public ResponseEntity<Message> createMessage(@RequestBody Message message) {
+    return ResponseEntity.ok(message);
     }
     
     @GetMapping
