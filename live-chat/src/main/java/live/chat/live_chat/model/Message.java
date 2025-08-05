@@ -2,32 +2,35 @@ package live.chat.live_chat.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
 public class Message {
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    private String Sender;
+
     private String content;
-    private String timestamp;
+    private Long timestamp;
+    private Long senderId;
+    private Long receiverId;
 
-    public String getSender() {
-        return Sender;
+
+    public Long getReceiverId() {
+        return receiverId;
     }
 
-    public void setSender(String sender) {
-        this.Sender = sender;
-    }
-    
-    public Long getId() {
-        return id;
+    public void setReceiverId(Long receiverId) {
+        this.receiverId = receiverId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Long getSenderId() {
+        return senderId;
+    }
+
+    public void setSenderId(Long senderId) {
+        this.senderId = senderId;
     }
 
     public String getContent() {
@@ -38,12 +41,20 @@ public class Message {
         this.content = content;
     }
 
-    public String getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Message() {
@@ -51,9 +62,9 @@ public class Message {
     }
 
     // Constructor with parameters
-    public Message(Long id, String sender, String content, String timestamp) {
-        this.id = id;
-        this.Sender = sender;
+    public Message(Long senderId, Long receiverId, String content, Long timestamp) {
+        this.senderId = senderId;
+        this.receiverId = receiverId;
         this.content = content;
         this.timestamp = timestamp;
     }
