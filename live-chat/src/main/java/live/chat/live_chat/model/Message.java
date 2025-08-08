@@ -98,10 +98,15 @@ public class Message {
     }
 
     // Constructor with parameters
-    public Message(Long senderId, Long receiverId, String content, Long timestamp) {
+    public Message(Long senderId, Long receiverId, String content, Long timestamp, String fileType, String fileName, String fileSize, String filePath) {
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.content = content;
         this.timestamp = timestamp;
+        this.messageType = "text";
+        this.fileType = fileType;
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.filePath = filePath;
     }
 }
