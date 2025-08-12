@@ -13,43 +13,113 @@
         <h1>Live Chat</h1>
         <div class="chat-flex">
             <!-- Sender 1 Form -->
-            <form class="chat-form" id="sender1-form" onsubmit="event.preventDefault(); sendMessage(1);">
+            <div class="chat-form">
                 <h2>Sender 1</h2>
-                <div class="input-row">
-                    <input type="number" id="sender1-id" placeholder="Sender 1 ID" min="1" required />
+                <!-- User Selection Circles -->
+                <div class="user-selection">
+                    <div class="user-circle" data-user="1" onclick="selectUser(1, 1)">1</div>
+                    <div class="user-circle" data-user="2" onclick="selectUser(1, 2)">2</div>
+                    <div class="user-circle" data-user="3" onclick="selectUser(1, 3)">3</div>
+                    <div class="user-circle" data-user="4" onclick="selectUser(1, 4)">4</div>
                 </div>
-                <div class="input-row">
-                    <input type="number" id="sender1-receiver-id" placeholder="Receiver ID" min="1" required />
-                    <input type="text" id="sender1-message" placeholder="Message here" required />
-                </div>
-                <div class="input-row">
-                    <input type="file" id="sender1-file" />
-                </div>
-                <button type="submit">Send Message</button>
-            </form>
+
+                <form id="sender1-form" onsubmit="event.preventDefault(); sendMessage(1);">
+                    <input type="hidden" id="sender1-id" value="1" />
+                    <input type="hidden" id="sender1-receiver-id" value="2" />
+                    <div class="input-row">
+                        <input type="text" id="sender1-message" placeholder="Message here" required />
+                    </div>
+                    <div class="input-row">
+                        <input type="file" id="sender1-file" />
+                    </div>
+                    <button type="submit">Send Message</button>
+                </form>
+            </div>
+
             <!-- Chat History -->
             <div class="chat-history" id="chat-history">
                 <h2 style="text-align:center;">Chat History</h2>
+                <div class="selected-users">
+                    <span id="selected-users-display">User 1 ↔ User 2</span>
+                </div>
                 <div id="messages-list"></div>
             </div>
+
             <!-- Sender 2 Form -->
-            <form class="chat-form" id="sender2-form" onsubmit="event.preventDefault(); sendMessage(2);">
+            <div class="chat-form">
                 <h2>Sender 2</h2>
-                <div class="input-row">
-                    <input type="number" id="sender2-id" placeholder="Sender 2 ID" min="1" required />
+                <!-- User Selection Circles -->
+                <div class="user-selection">
+                    <div class="user-circle" data-user="1" onclick="selectUser(2, 1)">1</div>
+                    <div class="user-circle active" data-user="2" onclick="selectUser(2, 2)">2</div>
+                    <div class="user-circle" data-user="3" onclick="selectUser(2, 3)">3</div>
+                    <div class="user-circle" data-user="4" onclick="selectUser(2, 4)">4</div>
                 </div>
-                <div class="input-row">
-                    <input type="number" id="sender2-receiver-id" placeholder="Receiver ID" min="1" required />
-                    <input type="text" id="sender2-message" placeholder="Message here" required />
-                </div>
-                <div class="input-row">
-                    <input type="file" id="sender2-file" />
-                </div>
-                <button type="submit">Send Message</button>
-            </form>
+
+                <form id="sender2-form" onsubmit="event.preventDefault(); sendMessage(2);">
+                    <input type="hidden" id="sender2-id" value="2" />
+                    <input type="hidden" id="sender2-receiver-id" value="1" />
+                    <div class="input-row">
+                        <input type="text" id="sender2-message" placeholder="Message here" required />
+                    </div>
+                    <div class="input-row">
+                        <input type="file" id="sender2-file" />
+                    </div>
+                    <button type="submit">Send Message</button>
+                </form>
+            </div>
         </div>
     </main>
     <script>
+        // Initialize default selections
+        let sender1UserId = 1;
+        let sender2UserId = 2;
+
+        // Set initial active states
+        document.addEventListener('DOMContentLoaded', function () {
+            selectUser(1, 1);
+            selectUser(2, 2);
+        });
+
+        // Select user function
+        function selectUser(senderNum, userId) {
+            // Remove active class from all circles in this sender's section
+            const senderSection = document.querySelector(`#sender${senderNum}-form`).closest('.chat-form');
+            const circles = senderSection.querySelectorAll('.user-circle');
+            circles.forEach(circle => circle.classList.remove('active'));
+
+            // Add active class to selected circle
+            const selectedCircle = senderSection.querySelector(`[data-user="${userId}"]`);
+            selectedCircle.classList.add('active');
+
+            // Update the sender and receiver IDs
+            if (senderNum === 1) {
+                sender1UserId = userId;
+                document.getElementById('sender1-id').value = userId;
+                document.getElementById('sender1-receiver-id').value = sender2UserId;
+            } else {
+                sender2UserId = userId;
+                document.getElementById('sender2-id').value = userId;
+                document.getElementById('sender2-receiver-id').value = sender1UserId;
+            }
+
+            // Update both forms' receiver IDs to maintain the connection
+            document.getElementById('sender1-receiver-id').value = sender2UserId;
+            document.getElementById('sender2-receiver-id').value = sender1UserId;
+
+            // Update display
+            updateSelectedUsersDisplay();
+
+            // Refresh chat history
+            fetchChatHistory();
+        }
+
+        // Update the display showing which users are selected
+        function updateSelectedUsersDisplay() {
+            const display = document.getElementById('selected-users-display');
+            display.textContent = `User ${sender1UserId} ↔ User ${sender2UserId}`;
+        }
+
         // Utility to get form values
         function getFormValues(senderNum) {
             return {
@@ -64,8 +134,8 @@
         function sendMessage(senderNum) {
             const { senderId, receiverId, content, file } = getFormValues(senderNum);
 
-            if (!senderId || !receiverId || !content) {
-                alert("Please fill in all fields.");
+            if (!content) {
+                alert("Please enter a message.");
                 return;
             }
 
@@ -86,6 +156,11 @@
                     return response.json();
                 })
                 .then(data => {
+                    // Clear the message input
+                    document.getElementById(`sender${senderNum}-message`).value = '';
+                    // Clear the file input
+                    document.getElementById(`sender${senderNum}-file`).value = '';
+                    // Refresh chat history
                     fetchChatHistory();
                 })
                 .catch(error => {
@@ -93,27 +168,22 @@
                 });
         }
 
-        // Always show chat between selected Sender 1 & Sender 2
+        // Always show chat between selected users
         function renderChatHistory(messages) {
-            const chatHistory = document.querySelector('.chat-history');
+            const chatHistory = document.querySelector('#messages-list');
             chatHistory.innerHTML = '';
 
-            const sender1Id = parseInt(document.getElementById('sender1-id').value);
-            const sender2Id = parseInt(document.getElementById('sender2-id').value);
-
-            if (!sender1Id || !sender2Id) return;
-
             const filteredMessages = messages.filter(msg =>
-                (msg.senderId === sender1Id && msg.receiverId === sender2Id) ||
-                (msg.senderId === sender2Id && msg.receiverId === sender1Id)
+                (msg.senderId === sender1UserId && msg.receiverId === sender2UserId) ||
+                (msg.senderId === sender2UserId && msg.receiverId === sender1UserId)
             );
 
             filteredMessages.forEach(message => {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
 
-                const fromText = message.senderId === sender1Id ? 'Sender 1' : 'Sender 2';
-                const toText = message.receiverId === sender1Id ? 'Sender 1' : 'Sender 2';
+                const fromText = message.senderId === sender1UserId ? 'User 1' : 'User 2';
+                const toText = message.receiverId === sender1UserId ? 'User 1' : 'User 2';
 
                 messageDiv.innerHTML = `
                     <div class="meta">From: ${fromText} (ID: ${message.senderId}) → To: ${toText} (ID: ${message.receiverId})</div>
@@ -143,10 +213,6 @@
                     document.getElementById('messages-list').innerHTML = `<span style="color:red;">${err.message}</span>`;
                 });
         }
-
-        // Update chat history whenever Sender 1 or Sender 2 ID changes
-        document.getElementById('sender1-id').oninput = fetchChatHistory;
-        document.getElementById('sender2-id').oninput = fetchChatHistory;
 
         window.onload = () => {
             fetchChatHistory();
