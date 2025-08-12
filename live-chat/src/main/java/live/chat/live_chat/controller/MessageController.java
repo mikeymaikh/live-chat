@@ -1,16 +1,15 @@
 package live.chat.live_chat.controller;
-import java.io.File;
+
 import java.io.IOException;
 import java.util.List;
-import java.util.Random;
 
-import org.aspectj.apache.bcel.classfile.Field;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import live.chat.live_chat.model.Message;
 import live.chat.live_chat.model.MessageRepository;
 
-
 @RestController
 @RequestMapping("/api/messages")
 public class MessageController {
@@ -27,9 +25,37 @@ public class MessageController {
     @Autowired
     private MessageRepository messageRepository;
 
-    @PostMapping
-    public Message sendMessage(@RequestBody Message message) {
-        return messageRepository.save(message);
+    // Support both multipart and form data
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE})
+    public ResponseEntity<?> sendMessage(
+            @RequestParam("senderId") Long senderId,
+            @RequestParam("receiverId") Long receiverId,
+            @RequestParam("content") String content,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        try {
+            Message message = new Message();
+            message.setSenderId(senderId);
+            message.setReceiverId(receiverId);
+            message.setContent(content);
+            message.setTimestamp(System.currentTimeMillis());
+
+            if (file != null && !file.isEmpty()) {
+                // Store file data in database
+                message.setMessageType("file");
+                message.setFileName(file.getOriginalFilename());
+                message.setFileType(file.getContentType());
+                message.setFileSize(String.valueOf(file.getSize()));
+                message.setFileData(file.getBytes());
+            } else {
+                message.setMessageType("text");
+            }
+
+            Message savedMessage = messageRepository.save(message);
+            return ResponseEntity.status(201).body(savedMessage);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error saving message: " + e.getMessage());
+        }
     }
     
     @GetMapping
@@ -42,34 +68,21 @@ public class MessageController {
         return messageRepository.findByReceiverId(receiverId);
     }
 
-    @PostMapping("/api/messages/upload")
-    public Message uploadFile(
-        @RequestParam("file") MultipartFile file,
-        @RequestParam("senderId") Long senderId,
-        @RequestParam("receiverId") Long receiverId
-    ) throws IllegalStateException, IOException {
-        if (file.isEmpty() || senderId == null || receiverId == null) {
-            return null;
-        }
-
-        String fileName = file.getOriginalFilename();
-        fileName = fileName + "_" + new Random().nextInt(1000);
-
-        String fileType = file.getContentType();
-        Long fileSize = file.getSize();
-        String filePath = "/uploads/files/";
-        File uploadPath = new File(filePath);
-        if (!uploadPath.exists()) {
-            uploadPath.mkdirs();
-        }
-
-        File serverFile = new File(uploadPath, fileName);
-        file.transferTo(serverFile);
-
+    // Download file from database
+    @GetMapping("/download/{messageId}")
+    public ResponseEntity<byte[]> downloadFile(@PathVariable Long messageId) {
+        Message message = messageRepository.findById(messageId).orElse(null);
         
-        Message message = new Message(senderId, receiverId, fileName, fileSize, fileType, filePath, null, null);
-        return messageRepository.save(message);
-    }
-       
+        if (message == null || message.getFileData() == null) {
+            return ResponseEntity.notFound().build();
+        }
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + message.getFileName() + "\"");
+        headers.add(HttpHeaders.CONTENT_TYPE, message.getFileType());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(message.getFileData());
+    }
 }

@@ -1,112 +1,80 @@
 package live.chat.live_chat.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "messages")
 public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String content;
-    private Long timestamp;
+    @Column(name = "sender_id")
     private Long senderId;
+
+    @Column(name = "receiver_id")
     private Long receiverId;
 
-    private String messageType = "text";
-    private String fileType;
+    @Column(name = "content", columnDefinition = "TEXT")
+    private String content;
+
+    @Column(name = "timestamp")
+    private Long timestamp;
+
+    @Column(name = "message_type")
+    private String messageType = "text"; // "text" or "file"
+
+    @Column(name = "file_name")
     private String fileName;
+
+    @Column(name = "file_type")
+    private String fileType;
+
+    @Column(name = "file_size")
     private String fileSize;
-    private String filePath;
 
-    public String getMessageType() {
-        return messageType;
-    }
-    public void setMessageType(String messageType) {
-        this.messageType = messageType;
-    }
-    public String getFileType() {
-        return fileType;
-    }
-    public void setFileType(String fileType) {
-        this.fileType = fileType;
-    }
-    public String getFileName() {
-        return fileName;
-    }
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-    public String getFileSize() {
-        return fileSize;
-    }
-    public void setFileSize(String fileSize) {
-        this.fileSize = fileSize;
-    }
-    public String getFilePath() {
-        return filePath;
-    }
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
+    // Store file as binary data in database
+    @Lob
+    @Column(name = "file_data")
+    private byte[] fileData;
 
-    public Long getReceiverId() {
-        return receiverId;
-    }
+    // Constructors
+    public Message() {}
 
-    public void setReceiverId(Long receiverId) {
-        this.receiverId = receiverId;
-    }
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getSenderId() {
-        return senderId;
-    }
+    public Long getSenderId() { return senderId; }
+    public void setSenderId(Long senderId) { this.senderId = senderId; }
 
-    public void setSenderId(Long senderId) {
-        this.senderId = senderId;
-    }
+    public Long getReceiverId() { return receiverId; }
+    public void setReceiverId(Long receiverId) { this.receiverId = receiverId; }
 
-    public String getContent() {
-        return content;
-    }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
+    public Long getTimestamp() { return timestamp; }
+    public void setTimestamp(Long timestamp) { this.timestamp = timestamp; }
 
-    public Long getTimestamp() {
-        return timestamp;
-    }
+    public String getMessageType() { return messageType; }
+    public void setMessageType(String messageType) { this.messageType = messageType; }
 
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
-    }
+    public String getFileName() { return fileName; }
+    public void setFileName(String fileName) { this.fileName = fileName; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getFileType() { return fileType; }
+    public void setFileType(String fileType) { this.fileType = fileType; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getFileSize() { return fileSize; }
+    public void setFileSize(String fileSize) { this.fileSize = fileSize; }
 
-    public Message() {
-        // No-argument constructor
-    }
-
-    // Constructor with parameters
-    public Message(Long senderId, Long receiverId, String content, Long timestamp, String fileType, String fileName, String fileSize, String filePath) {
-        this.senderId = senderId;
-        this.receiverId = receiverId;
-        this.content = content;
-        this.timestamp = timestamp;
-        this.messageType = "text";
-        this.fileType = fileType;
-        this.fileName = fileName;
-        this.fileSize = fileSize;
-        this.filePath = filePath;
-    }
+    public byte[] getFileData() { return fileData; }
+    public void setFileData(byte[] fileData) { this.fileData = fileData; }
 }

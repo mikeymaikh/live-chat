@@ -114,6 +114,14 @@
             margin-bottom: 2px;
         }
 
+        .file-link {
+            display: inline-block;
+            margin-top: 4px;
+            color: #2563eb;
+            text-decoration: underline;
+            font-size: 14px;
+        }
+
         @media (max-width: 1100px) {
             .chat-flex {
                 flex-direction: column;
@@ -143,6 +151,9 @@
                     <input type="number" id="sender1-receiver-id" placeholder="Receiver ID" min="1" required />
                     <input type="text" id="sender1-message" placeholder="Message here" required />
                 </div>
+                <div class="input-row">
+                    <input type="file" id="sender1-file" />
+                </div>
                 <button type="submit">Send Message</button>
             </form>
             <!-- Chat History -->
@@ -160,6 +171,9 @@
                     <input type="number" id="sender2-receiver-id" placeholder="Receiver ID" min="1" required />
                     <input type="text" id="sender2-message" placeholder="Message here" required />
                 </div>
+                <div class="input-row">
+                    <input type="file" id="sender2-file" />
+                </div>
                 <button type="submit">Send Message</button>
             </form>
         </div>
@@ -170,68 +184,78 @@
             return {
                 senderId: document.getElementById(`sender${senderNum}-id`).value,
                 receiverId: document.getElementById(`sender${senderNum}-receiver-id`).value,
-                content: document.getElementById(`sender${senderNum}-message`).value
+                content: document.getElementById(`sender${senderNum}-message`).value,
+                file: document.getElementById(`sender${senderNum}-file`).files[0] || null
             };
         }
 
-        // Send message from either sender
+        // Send message from either sender (now supports file)
         function sendMessage(senderNum) {
-            const { senderId, receiverId, content } = getFormValues(senderNum);
+            const { senderId, receiverId, content, file } = getFormValues(senderNum);
+
             if (!senderId || !receiverId || !content) {
-                alert('Please fill all fields.');
+                alert("Please fill in all fields.");
                 return;
             }
-            fetch('/api/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    senderId: Number(senderId),
-                    receiverId: Number(receiverId),
-                    content,
-                    timestamp: Date.now()
-                })
+
+            const formData = new FormData();
+            formData.append("senderId", senderId);
+            formData.append("receiverId", receiverId);
+            formData.append("content", content);
+            if (file) {
+                formData.append("file", file);
+            }
+
+            fetch("/api/messages", {
+                method: "POST",
+                body: formData
             })
-                .then(res => {
-                    if (!res.ok) throw new Error('Failed to send message');
-                    document.getElementById(`sender${senderNum}-message`).value = '';
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to send message");
+                    return response.json();
+                })
+                .then(data => {
                     fetchChatHistory();
                 })
-                .catch(err => {
-                    alert(err.message);
+                .catch(error => {
+                    alert("Error: " + error.message);
                 });
         }
 
         // Always show chat between selected Sender 1 & Sender 2
         function renderChatHistory(messages) {
-            const sender1Id = document.getElementById('sender1-id').value;
-            const sender2Id = document.getElementById('sender2-id').value;
-            const container = document.getElementById('messages-list');
-            container.innerHTML = '';
-            messages
-                .filter(msg => {
-                    // Only show messages between sender1Id and sender2Id (both directions)
-                    return (
-                        sender1Id && sender2Id &&
-                        (
-                            (msg.senderId == sender1Id && msg.receiverId == sender2Id) ||
-                            (msg.senderId == sender2Id && msg.receiverId == sender1Id)
-                        )
-                    );
-                })
-                .sort((a, b) => a.timestamp - b.timestamp)
-                .forEach(msg => {
-                    const msgDiv = document.createElement('div');
-                    msgDiv.className = 'message';
-                    msgDiv.innerHTML = `
-                        <div class="meta">
-                            (ID: ${msg.senderId}) → (ID: ${msg.receiverId})<br>
-                            ${new Date(msg.timestamp).toLocaleString()}
-                        </div>
-                        ${msg.content}
-                    `;
-                    container.appendChild(msgDiv);
-                });
-            container.scrollTop = container.scrollHeight;
+            const chatHistory = document.querySelector('.chat-history');
+            chatHistory.innerHTML = '';
+
+            const sender1Id = parseInt(document.getElementById('sender1-id').value);
+            const sender2Id = parseInt(document.getElementById('sender2-id').value);
+
+            if (!sender1Id || !sender2Id) return;
+
+            const filteredMessages = messages.filter(msg =>
+                (msg.senderId === sender1Id && msg.receiverId === sender2Id) ||
+                (msg.senderId === sender2Id && msg.receiverId === sender1Id)
+            );
+
+            filteredMessages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+
+                const fromText = message.senderId === sender1Id ? 'Sender 1' : 'Sender 2';
+                const toText = message.receiverId === sender1Id ? 'Sender 1' : 'Sender 2';
+
+                messageDiv.innerHTML = `
+                    <div class="meta">From: ${fromText} (ID: ${message.senderId}) → To: ${toText} (ID: ${message.receiverId})</div>
+                    <div>${message.content}</div>
+                `;
+
+                // Add file download link if it's a file message
+                if (message.messageType === 'file') {
+                    messageDiv.innerHTML += `<br><a href="/api/messages/download/${message.id}" class="file-link">${message.fileName}</a>`;
+                }
+
+                chatHistory.appendChild(messageDiv);
+            });
         }
 
         // Fetch all messages for chat history

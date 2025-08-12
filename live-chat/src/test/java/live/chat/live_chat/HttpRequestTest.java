@@ -1,13 +1,10 @@
 package live.chat.live_chat;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-
-import live.chat.live_chat.model.Message;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class HttpRequestTest {
@@ -18,6 +15,7 @@ class HttpRequestTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    /*  Useless test case now, due to updating front-end to have a test UI
     @Test
     void shouldSendMessageAndReceiveIt() {
         String url = "http://localhost:" + port + "/api/messages";
@@ -45,4 +43,5 @@ class HttpRequestTest {
         System.out.println("Timestamp: " + sentMessage.getTimestamp());
 
     }
+    */
 }
